@@ -1,7 +1,19 @@
 import React, {useState} from "react";
-import {Button, Dimensions, Text, View, StyleSheet, FlatList, Modal, TextInput} from "react-native";
+import {
+    Button,
+    Dimensions,
+    Text,
+    View,
+    StyleSheet,
+    FlatList,
+    Modal,
+    TextInput,
+    Animated,
+    TouchableOpacity
+} from "react-native";
 import {Swipeable} from "react-native-gesture-handler";
 import {FontAwesome} from "@expo/vector-icons";
+import {AnimatedView} from "react-native-reanimated/lib/typescript/reanimated2/component/View";
 
 const ListModal = () => {
     // Etat pour la visibilité du modal
@@ -63,12 +75,61 @@ const ListModal = () => {
         );
     };
 
+// Fonction de rendu pour chaque élément de la liste
+    const  renderListItem = (itemData) => {
+        const renderRightActions = (_,dragX) => {
+            // cinfiguration des animations
+            const scaleEdit =  dragX.interpolate({
+                inputRange:[-100,0],
+                outputRange: [1, 0.9],
+                extrapolate: "clamp"
+            });
+
+            const scaleDelete = dragX.interpolate({
+                inputRange:[-50,0],
+                outputRange: [1, 0.9],
+                extrapolate: "clamp"
+            });
+
+            // rendu des boutons d'édition et de suppressio
+            return (
+                <View style={styles.swipeableRow}>
+                    <Animated.View style={[styles.editAction,{transform:[{scale: scaleEdit}]}]}></Animated.View>
+                    <TouchableOpacity onPress={() => handleEditItem(itemData.item.id, itemData.item.value )}>
+                        <FontAwesome name="pencil" size={24} color="white" />
+                    </TouchableOpacity>
+
+                    <Animated.View style={[styles.deleteAction,{transform:[{scale: scaleDelete}]}]}></Animated.View>
+                    <TouchableOpacity onPress={() => handleRemoveItem(itemData.item.id)}>
+                        <FontAwesome name="trash-o" size={24} color="white" />
+                    </TouchableOpacity>
+                </View>
+            )
+        }
+        // rendu de l'élément de la liste
+        return(
+        <Swipeable renderRightActions={renderRightActions}>
+            <View style={styles.listItemContainer}>
+                <Text style={styles.listItem}>{itemData.item.value}</Text>
+
+            </View>
+        </Swipeable>
+        )
+    }
+
+
+
 
     return (
         <View style={styles.centeredView}>
-            <Button title="Ajouter un élément"/>
+            <Button title="Ajouter un élément" onPress={() => {
+                // réinitialisation des  etats et ouverture modal
+                setEditItem(null);
+                setInputText("");
+                setModalVisible(true)
+            }}/>
             {/* Liste des éléments */}
-            <FlatList data={itemList} renderItem={} keyExtractor={(item) => item.id}/>
+            <FlatList data={itemList} renderListItem={} keyExtractor={(item) => item.id}/>
             {/* Modal pour ajouter ou modifier un élément */}
             <Modal animationType="slide" transparent={true} visible={modalVisible} onRequestClose={() => {
                 setModalVisible(!modalVisible)
